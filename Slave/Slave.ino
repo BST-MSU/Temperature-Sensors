@@ -31,10 +31,8 @@
  float Fahrenheit=0;
  float Celcius=0;
  char data[64];
- String buff;
+ int temp[7];
 
- char send_buff[1][32];
- int send_buff_index = 0;
 
  const int resistance[126] = {14066, 13457, 12878, 12327, 11803, 11305, 10830, 10377, 9946, 9535, 9128, 8770, 8413, 8073, 7748, 7438, 7142, 6859, 6589, 6330, 6083, 5847, 5621, 5405, 
                             5198, 5000, 4810, 4628, 4454, 4287, 4128, 3975, 3828, 3687, 3552, 3423, 3299, 3179, 3065, 2955, 2850, 2749, 2652, 2558, 2469, 2382, 2300, 2220, 2144, 
@@ -52,55 +50,22 @@ void setup() {
 }
 
 void loop() {
-  int temp[6];
 
-  temp[0] = get_temp(0);
-  temp[0] += TEMP0_ADJUST;
-  temp[1] = get_temp(1);
-  temp[1] += TEMP1_ADJUST;
-  temp[2] = get_temp(2);
-  temp[2] += TEMP2_ADJUST;
-  temp[3] = get_temp(3);
-  temp[3] += TEMP3_ADJUST;
-  temp[4] = get_temp(4);
-  temp[4] += TEMP4_ADJUST;
-  temp[5] = get_temp(5);
-  temp[5] += TEMP5_ADJUST;
-  
-  for (int i = 0; i < sizeof(data); i++){
-    data[i] = '.';
-  }
-  
-  buff = "";
-  buff += "<";
-  buff += "TP";
-    if (SLAVE<10)
-      buff += "0"; //this adds a 0 to the beginning of SLAVE if it is less than 10
-    buff += SLAVE;
-  for (int i = 0; i < 6; i ++){
-    buff += ":";
-//    buff += String(i);
-//    buff += "=";
-    if (temp[i] > 800)
-      buff += "SHORT";
-    else if (temp[i] < -800)
-      buff += "OPEN";
-    else
-      buff += String(temp[i]);
-  }
+  temp[0] = SLAVE;
+  temp[1] = get_temp(0);
+  temp[1] += TEMP0_ADJUST;
+  temp[2] = get_temp(1);
+  temp[2] += TEMP1_ADJUST;
+  temp[3] = get_temp(2);
+  temp[3] += TEMP2_ADJUST;
+  temp[4] = get_temp(3);
+  temp[4] += TEMP3_ADJUST;
+  temp[5] = get_temp(4);
+  temp[5] += TEMP4_ADJUST;
+  temp[6] = get_temp(5);
+  temp[6] += TEMP5_ADJUST;
 
-  for (int i = (buff.length() + 2); i < sizeof(data); i++){
-    buff += ".";
-  }
-  buff += ">";
-  buff.toCharArray(data, sizeof(data));
   
-  for (int i = 0; i < 2; i++){
-    for (int x = 0; x < 32; x++){
-      send_buff[i][x] = data[x + (32 * i)];
-      //Serial.print(send_buff[i][x]);
-    }
-  }
   //Serial.println("");
   
     
@@ -112,15 +77,11 @@ void loop() {
 // function that executes whenever data is requested by master
 // this function is registered as an event, see setup()
 void requestEvent() {
-  Wire.write(send_buff[send_buff_index], 32); // respond with message of 128 bytes
-  send_buff_index++;
+  Wire.write( (byte *) &temp, sizeof(temp));; // respond with message of 32 bytes, this is the max arduinos can send over i2c
   // as expected by master
-  if (send_buff_index == 4){
-    send_buff_index = 0;
-    digitalWrite(13, HIGH);
-    delay(100);
-    digitalWrite(13, LOW);
-  }
+   digitalWrite(13, HIGH);
+   delay(100);
+   digitalWrite(13, LOW);
 }
 
 int get_temp(int x){
@@ -169,5 +130,3 @@ int get_temp(int x){
   //Serial.println(ret);
   return ret;
 }
-
-
